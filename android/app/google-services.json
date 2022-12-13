@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "64870303862",
+    "project_id": "calendar-event-16ca5",
+    "storage_bucket": "calendar-event-16ca5.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:64870303862:android:0c097741dff3e5fc3df757",
+        "android_client_info": {
+          "package_name": "com.calendar.event.calendar"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "64870303862-tjh7o11fv8l5b79r67h2cflhuip8rfpq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.calendar.event.calendar",
+            "certificate_hash": "09ae07042796ca8bb1f472b36ae916c9d97d045b"
+          }
+        },
+        {
+          "client_id": "64870303862-srrp11abpjua0bfut94p0i2c7vt2b6nj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCXYenMriXLqbHC6hVjLCiDCRq74JoB4Zo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "64870303862-srrp11abpjua0bfut94p0i2c7vt2b6nj.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "64870303862-i8agrh768f1135lomontg7tbqc9b61ra.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.calendar.event.calendar"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
