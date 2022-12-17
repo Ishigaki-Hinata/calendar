@@ -131,14 +131,14 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 
 class GoogleDataSource extends CalendarDataSource {
-  GoogleDataSource({List<googleAPI.Event> events}) {
+  GoogleDataSource({required List<googleAPI.Event> events}) {
     this.appointments = events;
   }
 
   @override
   DateTime getStartTime(int index) {
     final googleAPI.Event event = appointments[index];
-    return event.start.date ?? event.start.dateTime.toLocal();
+    return event.start!.date ?? event.start!.dateTime!.toLocal();
   }
 
   @override
@@ -149,11 +149,11 @@ class GoogleDataSource extends CalendarDataSource {
   @override
   DateTime getEndTime(int index) {
     final googleAPI.Event event = appointments[index];
-    return event.endTimeUnspecified != null && event.endTimeUnspecified
-        ? (event.start.date ?? event.start.dateTime.toLocal())
-        : (event.end.date != null
-        ? event.end.date.add(Duration(days: -1))
-        : event.end.dateTime.toLocal());
+    return event.endTimeUnspecified != event.endTimeUnspecified
+        ? (event.start!.date ?? event.start!.dateTime!.toLocal())
+        : (event.end!.date != null
+        ? event.end!.date!.add(Duration(days: -1))
+        : event.end!.dateTime!.toLocal());
   }
 
   @override
@@ -167,9 +167,9 @@ class GoogleDataSource extends CalendarDataSource {
   }
 
   @override
-  String getSubject(int index) {
+  String? getSubject(int index) {
     final googleAPI.Event event = appointments[index];
-    return event.summary == null || event.summary.isEmpty
+    return event.summary == null || event.summary!.isEmpty
         ? 'No Title'
         : event.summary;
   }
