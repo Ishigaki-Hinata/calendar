@@ -130,6 +130,41 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
+class GoogleAPIClient extends IOClient {
+  Map<String, String> _headers;
+
+  GoogleAPIClient(this._headers) : super();
+
+  @override
+  Future<IOStreamedResponse> send(BaseRequest request) =>
+      super.send(request..headers.addAll(_headers));
+
+  @override
+  Future<Response> head(Object url, {Map<String, String> headers}) =>
+      super.head(url, headers: headers..addAll(_headers));
+}
+
+Future<List<googleAPI.Event>> getGoogleEventsData() async {
+  final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+  final GoogleAPIClient httpClient =
+  GoogleAPIClient(await googleUser!.authHeaders);
+  final googleAPI.CalendarApi calendarAPI = googleAPI.CalendarApi(httpClient);
+  final googleAPI.Events calEvents = await calendarAPI.events.list(
+    "primary",
+  );
+  final List<googleAPI.Event> appointments = <googleAPI.Event>[];
+  if (calEvents != null && calEvents.items != null) {
+  for (int i = 0; i < calEvents.items!.length; i++) {
+  final googleAPI.Event event = calEvents.items![i];
+  if (event.start == null) {
+  continue;
+  }
+  appointments.add(event);
+  }
+  }
+  return appointments;
+}
+
 class GoogleDataSource extends CalendarDataSource {
   GoogleDataSource({required List<googleAPI.Event> events}) {
     this.appointments = events;
