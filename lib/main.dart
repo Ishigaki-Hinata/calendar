@@ -5,6 +5,9 @@ import 'package:googleapis/calendar/v3.dart' as googleAPI;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis_auth/googleapis_auth.dart';
 import 'package:cupertino_icons/cupertino_icons.dart';
+import 'package:http/http.dart';
+import 'package:http/io_client.dart';
+
 
 
 
@@ -64,18 +67,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -92,76 +83,52 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
-          ],
+        child: FutureBuilder(
+          future: getGoogleEventsData(),
+          builder: (BuildContext context, AsyncSnapshot snapshot) {
+            return Container(
+                child: Stack(
+                  children: [
+                    Container(
+                      child: SfCalendar(
+                        view: CalendarView.month,
+                        dataSource: GoogleDataSource(events: snapshot.data),
+                        monthViewSettings: MonthViewSettings(
+                            appointmentDisplayMode:
+                            MonthAppointmentDisplayMode.appointment),
+                      ),
+                    ),
+                    snapshot.data != null
+                        ? Container()
+                        : Center(
+                      child: CircularProgressIndicator(),
+                    )
+                  ],
+                ));
+          },
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
 
-class GoogleAPIClient extends IOClient {
-  Map<String, String> _headers;
-
-  GoogleAPIClient(this._headers) : super();
-
-  @override
-  Future<IOStreamedResponse> send(BaseRequest request) =>
-      super.send(request..headers.addAll(_headers));
-
-  @override
-  Future<Response> head(Object url, {Map<String, String> headers}) =>
-      super.head(url, headers: headers..addAll(_headers));
-}
-
 Future<List<googleAPI.Event>> getGoogleEventsData() async {
   final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-  final GoogleAPIClient httpClient =
-  GoogleAPIClient(await googleUser!.authHeaders);
+  final GoogleAPIClient httpClient = GoogleAPIClient(await googleUser!.authHeaders);
   final googleAPI.CalendarApi calendarAPI = googleAPI.CalendarApi(httpClient);
   final googleAPI.Events calEvents = await calendarAPI.events.list(
     "primary",
   );
   final List<googleAPI.Event> appointments = <googleAPI.Event>[];
   if (calEvents != null && calEvents.items != null) {
-  for (int i = 0; i < calEvents.items!.length; i++) {
-  final googleAPI.Event event = calEvents.items![i];
-  if (event.start == null) {
-  continue;
-  }
-  appointments.add(event);
-  }
-  }
+    for (int i = 0; i < calEvents.items!.length; i++) {
+      final googleAPI.Event event = calEvents.items![i];
+      if (event.start == null) {
+        continue;
+        }
+      appointments.add(event);
+      }
+    }
   return appointments;
 }
 
@@ -210,4 +177,16 @@ class GoogleDataSource extends CalendarDataSource {
   }
 }
 
+class GoogleAPIClient extends IOClient {
+  Map<String, String> _headers;
 
+  GoogleAPIClient(this._headers) : super();
+
+  @override
+  Future<IOStreamedResponse> send(BaseRequest request) =>
+      super.send(request..headers.addAll(_headers));
+
+  @override
+  Future<Response> head(Uri url, { Map<String, String> ? headers}) =>
+      super.head(url, headers: headers!..addAll(_headers));
+}
