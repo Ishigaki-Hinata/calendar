@@ -135,18 +135,18 @@ class GoogleDataSource extends CalendarDataSource {
 
   @override
   DateTime getStartTime(int index) {
-    final googleAPI.Event event = appointments[index];
+    final googleAPI.Event event = appointments![index];
     return event.start!.date ?? event.start!.dateTime!.toLocal();
   }
 
   @override
   bool isAllDay(int index) {
-    return appointments[index].start.date != null;
+    return appointments![index].start.date != null;
   }
 
   @override
   DateTime getEndTime(int index) {
-    final googleAPI.Event event = appointments[index];
+    final googleAPI.Event event = appointments![index];
     return event.endTimeUnspecified != event.endTimeUnspecified
         ? (event.start!.date ?? event.start!.dateTime!.toLocal())
         : (event.end!.date != null
@@ -156,17 +156,17 @@ class GoogleDataSource extends CalendarDataSource {
 
   @override
   String getLocation(int index) {
-    return appointments[index].location;
+    return appointments![index].location;
   }
 
   @override
   String getNotes(int index) {
-    return appointments[index].description;
+    return appointments![index].description;
   }
 
   @override
-  String? getSubject(int index) {
-    final googleAPI.Event event = appointments[index];
+  String getSubject(int index) {
+    final googleAPI.Event event = appointments![index];
     return event.summary == null || event.summary!.isEmpty
         ? 'No Title'
         : event.summary;
