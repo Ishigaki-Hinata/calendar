@@ -8,20 +8,9 @@ import 'package:cupertino_icons/cupertino_icons.dart';
 import 'package:http/http.dart';
 import 'package:http/io_client.dart';
 
-
-
-
 void main() {
   runApp(const MyApp());
 }
-
-final GoogleSignIn _googleSignIn = GoogleSignIn(
-  clientId:
-  'OAuth Client ID',
-  scopes: <String>[
-    googleAPI.CalendarApi.calendarScope,
-  ],
-);
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -32,15 +21,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
         primarySwatch: Colors.blue,
       ),
       home: const MyHomePage(title: 'Flutter Demo Home Page'),
@@ -51,15 +31,6 @@ class MyApp extends StatelessWidget {
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
   final String title;
 
   @override
@@ -67,6 +38,29 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    //clientId: 'OAuth Client ID',
+    scopes: <String>[
+      googleAPI.CalendarApi.calendarScope,
+    ],
+  );
+
+  GoogleSignInAccount? _currentUser;
+
+  @override
+  void initState() {
+    print("#############################################initstate");
+    super.initState();
+    _googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount? account) {
+      setState(() {
+        _currentUser = account;
+      });
+      if (_currentUser != null) {
+        //getGoogleEventsData();
+      }
+    });
+    _googleSignIn.signInSilently();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,52 +74,83 @@ class _MyHomePageState extends State<MyHomePage> {
         child: FutureBuilder(
           future: getGoogleEventsData(),
           builder: (BuildContext context, AsyncSnapshot snapshot) {
+            print("#############################################builder");
             return Container(
                 child: Stack(
-                  children: [
-                    Container(
-                      child: SfCalendar(
-                        view: CalendarView.month,
-                        dataSource: GoogleDataSource(events: snapshot.data),
-                        monthViewSettings: MonthViewSettings(
-                            appointmentDisplayMode:
-                            MonthAppointmentDisplayMode.appointment
-                        ),
-                      ),
-                    ),
-                    snapshot.data != null
-                        ? Container()
-                        : Center(
-                      child: CircularProgressIndicator(),
-                    )
-                  ],
-                )
-            );
+              children: [
+                Container(
+                  child: SfCalendar(
+                    view: CalendarView.month,
+                    dataSource: GoogleDataSource(events: snapshot.data),
+                    monthViewSettings: MonthViewSettings(
+                        appointmentDisplayMode:
+                            MonthAppointmentDisplayMode.appointment),
+                  ),
+                ),
+                snapshot.data != null
+                    ? Container()
+                    : Center(
+                        child: CircularProgressIndicator(),
+                      )
+              ],
+            ));
           },
         ),
       ),
     );
   }
-}
 
-Future<List<googleAPI.Event>> getGoogleEventsData() async {
-  final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-  final GoogleAPIClient httpClient = GoogleAPIClient(await googleUser!.authHeaders);
-  final googleAPI.CalendarApi calendarAPI = googleAPI.CalendarApi(httpClient);
-  final googleAPI.Events calEvents = await calendarAPI.events.list(
-    "primary",
-  );
-  final List<googleAPI.Event> appointments = <googleAPI.Event>[];
-  if (calEvents != null && calEvents.items != null) {
-    for (int i = 0; i < calEvents.items!.length; i++) {
-      final googleAPI.Event event = calEvents.items![i];
-      if (event.start == null) {
-        continue;
+  Future<List<googleAPI.Event>> getGoogleEventsData() async {
+    print("#############################################getgoogleeventdata");
+    //Googleサインイン1人目処理→同じような処理をすると2人目が出来そう
+    final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+    if(googleUser == null) {
+      print("#############################################googleUser_null");
+    }else{
+      print("#############################################googleUser_notnull"+ googleUser.email);
+    }
+    final GoogleAPIClient httpClient =
+        GoogleAPIClient(await googleUser!.authHeaders);
+    if(httpClient == null) {
+      print("#############################################httpClient_null");
+    }else{
+      print("#############################################httpClient_notnull"+ httpClient.toString());
+    }
+    final googleAPI.CalendarApi calendarAPI = googleAPI.CalendarApi(httpClient);
+    if(calendarAPI == null) {
+      print("#############################################calendarAPI_null");
+    }else{
+      print("#############################################calendarAPI_notnull"+ calendarAPI.calendarList.toString());
+    }
+    final googleAPI.Events calEvents = await calendarAPI.events.list(
+      "primary",
+    );
+    if(calEvents == null) {
+      print("#############################################calEvents_null");
+    }else{
+      print("#############################################calEvents_notnull"+ calEvents.toString());
+    }
+    if(calEvents.items == null) {
+      print("#############################################calEvents.items_null");
+    }else{
+      print("#############################################calEvents.items_notnull"+ calEvents.items.toString());
+    }
+    final List<googleAPI.Event> appointments = <googleAPI.Event>[];
+    if(appointments == null) {
+      print("#############################################appointments_null");
+    }
+    if (calEvents != null && calEvents.items != null) {
+      print("#############################################get_if");
+      for (int i = 0; i < calEvents.items!.length; i++) {
+        final googleAPI.Event event = calEvents.items![i];
+        if (event.start == null) {
+          continue;
         }
-      appointments.add(event);
+        appointments.add(event);
       }
     }
-  return appointments;
+    return appointments;
+  }
 }
 
 class GoogleDataSource extends CalendarDataSource {
@@ -150,8 +175,8 @@ class GoogleDataSource extends CalendarDataSource {
     return event.endTimeUnspecified != event.endTimeUnspecified
         ? (event.start!.date ?? event.start!.dateTime!.toLocal())
         : (event.end!.date != null
-        ? event.end!.date!.add(Duration(days: -1))
-        : event.end!.dateTime!.toLocal());
+            ? event.end!.date!.add(Duration(days: -1))
+            : event.end!.dateTime!.toLocal());
   }
 
   @override
@@ -169,7 +194,7 @@ class GoogleDataSource extends CalendarDataSource {
     final googleAPI.Event event = appointments![index];
     return event.summary == null || event.summary!.isEmpty
         ? 'No Title'
-        : event.summary;
+        : event.summary!;
   }
 }
 
@@ -183,6 +208,6 @@ class GoogleAPIClient extends IOClient {
       super.send(request..headers.addAll(_headers));
 
   @override
-  Future<Response> head(Uri url, { Map<String, String> ? headers}) =>
+  Future<Response> head(Uri url, {Map<String, String>? headers}) =>
       super.head(url, headers: headers!..addAll(_headers));
 }
