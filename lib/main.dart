@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 import 'package:intl/intl.dart';
-import 'package:googleapis/calendar/v3.dart' as googleAPI;
+import 'package:googleapis/calendar/v3.dart' hide Colors;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis_auth/googleapis_auth.dart';
 import 'package:cupertino_icons/cupertino_icons.dart';
@@ -15,7 +15,6 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -23,15 +22,13 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
+  const MyHomePage({super.key});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -39,26 +36,16 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final GoogleSignIn _googleSignIn = GoogleSignIn(
-    //clientId: 'OAuth Client ID',
     scopes: <String>[
-      googleAPI.CalendarApi.calendarScope,
+      CalendarApi.calendarScope,
     ],
   );
 
-  GoogleSignInAccount? _currentUser;
-
   @override
   void initState() {
-    print("#############################################initstate");
     super.initState();
-    _googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount? account) {
-      setState(() {
-        _currentUser = account;
-      });
-      if (_currentUser != null) {
-        //getGoogleEventsData();
-      }
-    });
+    _googleSignIn.onCurrentUserChanged
+        .listen((GoogleSignInAccount? account) {});
     _googleSignIn.signInSilently();
   }
 
@@ -66,53 +53,46 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: Text('タイトル'),
       ),
-      body: Center(
-        child: FutureBuilder(
-          future: getGoogleEventsData(),
-          builder: (BuildContext context, AsyncSnapshot snapshot) {
-            print("#############################################builder");
-            return Container(
-                child: Stack(
-              children: [
-                Container(
-                  child: SfCalendar(
-                    view: CalendarView.month,
-                    dataSource: GoogleDataSource(events: snapshot.data),
-                    monthViewSettings: MonthViewSettings(
-                        appointmentDisplayMode:
-                            MonthAppointmentDisplayMode.appointment),
-                  ),
-                ),
-                snapshot.data != null
-                    ? Container()
-                    : Center(
-                        child: CircularProgressIndicator(),
-                      )
-              ],
-            ));
-          },
-        ),
+      body: FutureBuilder(
+        future: getGoogleEventsData(),
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
+          if (snapshot.data == null) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          } else {
+            return SfCalendar(
+              view: CalendarView.month,
+              initialDisplayDate: DateTime(2023, 1, 1, 9, 0, 0),
+              dataSource: GoogleDataSource(events: snapshot.data),
+              monthViewSettings: const MonthViewSettings(
+                  appointmentDisplayMode:
+                      MonthAppointmentDisplayMode.appointment),
+            );
+          }
+        },
       ),
     );
   }
 
-  Future<List<googleAPI.Event>> getGoogleEventsData() async {
+  Future<List<Event>> getGoogleEventsData() async {
     //Googleサインイン1人目処理→同じような処理をすると2人目が出来そう
     final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
     final GoogleAPIClient httpClient =
         GoogleAPIClient(await googleUser!.authHeaders);
-    final googleAPI.CalendarApi calendarAPI = googleAPI.CalendarApi(httpClient);
-    final googleAPI.Events calEvents = await calendarAPI.events.list(
+    final CalendarApi calendarAPI = CalendarApi(httpClient);
+    final Events calEvents = await calendarAPI.events.list(
       "primary",
     );
-    final List<googleAPI.Event> appointments = <googleAPI.Event>[];
-    if (calEvents != null && calEvents.items != null) {
+    final List<Event> appointments = <Event>[];
+    if (calEvents != null) {
       for (int i = 0; i < calEvents.items!.length; i++) {
-        final googleAPI.Event event = calEvents.items![i];
+        final Event event = calEvents.items![i];
+        if (event.start == null) {
+          continue;
+        }
         appointments.add(event);
       }
     }
@@ -121,13 +101,13 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 
 class GoogleDataSource extends CalendarDataSource {
-  GoogleDataSource({required List<googleAPI.Event> events}) {
+  GoogleDataSource({required List<Event> events}) {
     this.appointments = events;
   }
 
   @override
   DateTime getStartTime(int index) {
-    final googleAPI.Event event = appointments![index];
+    final Event event = appointments![index];
     return event.start!.date ?? event.start!.dateTime!.toLocal();
   }
 
@@ -138,8 +118,8 @@ class GoogleDataSource extends CalendarDataSource {
 
   @override
   DateTime getEndTime(int index) {
-    final googleAPI.Event event = appointments![index];
-    return event.endTimeUnspecified != event.endTimeUnspecified
+    final Event event = appointments![index];
+    return event.endTimeUnspecified != null && event!.endTimeUnspecified!
         ? (event.start!.date ?? event.start!.dateTime!.toLocal())
         : (event.end!.date != null
             ? event.end!.date!.add(Duration(days: -1))
@@ -148,17 +128,17 @@ class GoogleDataSource extends CalendarDataSource {
 
   @override
   String getLocation(int index) {
-    return appointments![index].location;
+    return appointments![index].location ?? '';
   }
 
   @override
   String getNotes(int index) {
-    return appointments![index].description;
+    return appointments![index].description ?? '';
   }
 
   @override
   String getSubject(int index) {
-    final googleAPI.Event event = appointments![index];
+    final Event event = appointments![index];
     return event.summary == null || event.summary!.isEmpty
         ? 'No Title'
         : event.summary!;
@@ -166,7 +146,7 @@ class GoogleDataSource extends CalendarDataSource {
 }
 
 class GoogleAPIClient extends IOClient {
-  Map<String, String> _headers;
+  final Map<String, String> _headers;
 
   GoogleAPIClient(this._headers) : super();
 
@@ -176,5 +156,6 @@ class GoogleAPIClient extends IOClient {
 
   @override
   Future<Response> head(Uri url, {Map<String, String>? headers}) =>
-      super.head(url, headers: headers!..addAll(_headers));
+      super.head(url,
+          headers: (headers != null ? (headers..addAll(_headers)) : headers));
 }
