@@ -101,51 +101,18 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<List<googleAPI.Event>> getGoogleEventsData() async {
-    print("#############################################getgoogleeventdata");
     //Googleサインイン1人目処理→同じような処理をすると2人目が出来そう
     final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-    if(googleUser == null) {
-      print("#############################################googleUser_null");
-    }else{
-      print("#############################################googleUser_notnull"+ googleUser.email);
-    }
     final GoogleAPIClient httpClient =
         GoogleAPIClient(await googleUser!.authHeaders);
-    if(httpClient == null) {
-      print("#############################################httpClient_null");
-    }else{
-      print("#############################################httpClient_notnull"+ httpClient.toString());
-    }
     final googleAPI.CalendarApi calendarAPI = googleAPI.CalendarApi(httpClient);
-    if(calendarAPI == null) {
-      print("#############################################calendarAPI_null");
-    }else{
-      print("#############################################calendarAPI_notnull"+ calendarAPI.calendarList.toString());
-    }
     final googleAPI.Events calEvents = await calendarAPI.events.list(
       "primary",
     );
-    if(calEvents == null) {
-      print("#############################################calEvents_null");
-    }else{
-      print("#############################################calEvents_notnull"+ calEvents.toString());
-    }
-    if(calEvents.items == null) {
-      print("#############################################calEvents.items_null");
-    }else{
-      print("#############################################calEvents.items_notnull"+ calEvents.items.toString());
-    }
     final List<googleAPI.Event> appointments = <googleAPI.Event>[];
-    if(appointments == null) {
-      print("#############################################appointments_null");
-    }
     if (calEvents != null && calEvents.items != null) {
-      print("#############################################get_if");
       for (int i = 0; i < calEvents.items!.length; i++) {
         final googleAPI.Event event = calEvents.items![i];
-        if (event.start == null) {
-          continue;
-        }
         appointments.add(event);
       }
     }
