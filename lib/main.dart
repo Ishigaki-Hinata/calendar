@@ -35,6 +35,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  /////////
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: <String>[
       CalendarApi.calendarScope,
@@ -48,6 +49,7 @@ class _MyHomePageState extends State<MyHomePage> {
         .listen((GoogleSignInAccount? account) {});
     _googleSignIn.signInSilently();
   }
+  ////////
 
   @override
   Widget build(BuildContext context) {
@@ -80,14 +82,19 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<List<Event>> getGoogleEventsData() async {
     //Googleサインイン1人目処理→同じような処理をすると2人目が出来そう
     final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+    print('#################################googleUser');
     final GoogleAPIClient httpClient =
         GoogleAPIClient(await googleUser!.authHeaders);
+    print('#################################httpClient');
     final CalendarApi calendarAPI = CalendarApi(httpClient);
+    print('#################################calendarAPI');
     final Events calEvents = await calendarAPI.events.list(
       "primary",
     );
+    print('#################################calEvents');
     final List<Event> appointments = <Event>[];
     if (calEvents != null) {
+      //////
       for (int i = 0; i < calEvents.items!.length; i++) {
         final Event event = calEvents.items![i];
         if (event.start == null) {
@@ -95,6 +102,7 @@ class _MyHomePageState extends State<MyHomePage> {
         }
         appointments.add(event);
       }
+      ///////
     }
     return appointments;
   }
